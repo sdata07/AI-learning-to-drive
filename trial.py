@@ -1,8 +1,10 @@
 import pygame
+import math
+import numpy as np
 
 pygame.init()
-width = 800
-height = 400
+width = 1400
+height = 800
 screen = pygame.display.set_mode((width, height), flags=pygame.SCALED, vsync=1) #Screen tearing fix
 
 pygame.display.set_caption("Car")
@@ -18,10 +20,16 @@ track_rect = track_surface.get_rect()
 
 #Car info
 car_surface  = pygame.image.load("pics/Car_top.png").convert_alpha()
-car_surface = pygame.transform.scale_by(car_surface, 0.10)
+car_surface = pygame.transform.scale_by(car_surface, 0.05)
 car_rect = car_surface.get_rect(midtop = (0, 100))
 
-i = 0
+
+#Car info original
+car_surface_orig = car_surface
+degrees = 0
+speed = 0
+MAX_SPPED = 12
+
 while running :
     #Event loop
     for event in pygame.event.get() :
@@ -34,7 +42,7 @@ while running :
     #All filling
     screen.fill((255,255,255))
 
-    #Conditonals
+    #Conditionals
     car_rect.left %= width
     car_rect.bottom %= height
     
@@ -49,16 +57,40 @@ while running :
     #Handle player input
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP] :
-        car_rect.top -=4
-    if keys[pygame.K_DOWN] :
-        car_rect.bottom +=4
-    if keys[pygame.K_RIGHT] :
-        car_rect.left +=4
-    if keys[pygame.K_LEFT] :
-        car_rect.right -=4
+        speed += 1
+        speed = min(MAX_SPPED, speed)
+    elif keys[pygame.K_DOWN]:
+        speed -= 1
+        speed = max(-MAX_SPPED, speed)
+    else :
+        factor = -1 if speed < 0 else 1
+        speed = abs(speed)
+        speed -= 0.4 * (speed / 10)
+        speed = speed * factor
+
+
+    if keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]:
+        orig_x = car_rect.centerx
+        orig_y = car_rect.centery
+
+        if keys[pygame.K_RIGHT] :
+            degrees -= 5
+        else : 
+            degrees += 5
+        degrees %= 360
+
+        car_surface  = pygame.transform.rotate(car_surface_orig, degrees)
+        car_rect = car_surface.get_rect(center = (orig_x , orig_y))
+
+    car_rect.top -= speed * math.sin(degrees * math.pi / 180)
+    car_rect.left += speed * math.cos(degrees * math.pi / 180)
 
     #Clean up and frame rate
+    pygame.draw.rect(screen,"Orange", car_rect, 2)
     pygame.display.update()
     clock.tick(60)
 
 pygame.quit()
+
+
+
