@@ -72,7 +72,9 @@ while running :
     #Collison check
     car_mask = pygame.mask.from_surface(car_surface)
     if not track_mask.overlap(car_mask, (car_rect.left - track_rect.left, car_rect.top - track_rect.top)):
+        clock.tick(500)
         car_rect.midtop = (600, 650)
+        
 
     #All screen blits on to display
 
