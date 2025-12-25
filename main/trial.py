@@ -7,8 +7,8 @@ def cast_ray(track_mask: pygame.mask, car_rect: pygame.Rect, track_rect: pygame.
     curr_x, curr_y = car_rect.centerx - track_rect.left, car_rect.centery - track_rect.top
 
     
-    dx =  5 * math.cos(degrees * (math.pi/180))
-    dy = 5 * -math.sin(degrees * (math.pi/180))
+    dx =  math.cos(degrees * (math.pi/180))
+    dy =  -math.sin(degrees * (math.pi/180))
 
     while (curr_x >= 0 and curr_x < track_mask.get_size()[0] and
            curr_y >= 0 and curr_y < track_mask.get_size()[1] and
@@ -18,7 +18,17 @@ def cast_ray(track_mask: pygame.mask, car_rect: pygame.Rect, track_rect: pygame.
 
     distance = math.sqrt((car_rect.centerx - track_rect.left - curr_x)**2 + (car_rect.centery - track_rect.top - curr_y) ** 2)
     return distance, (curr_x, curr_y)
-    
+
+def cast_all_rays(track_mask: pygame.mask, car_rect: pygame.Rect, track_rect: pygame.Rect, degrees, count=4) : 
+    step = 0
+    ray_points = []
+    dists = []
+    while (step <= 360) :
+        dist, (ray_x, ray_y) = cast_ray(track_mask, car_rect, track_rect, degrees + step)
+        ray_points.append((ray_x, ray_y))
+        dists.append(dist)
+        step += 360/count
+    return dists, ray_points
 
 pygame.init()
 width = 1400
@@ -71,21 +81,23 @@ while running :
     #Drawing the track
     screen.blit(track_surface, track_rect)
 
-
     #Collison check
     car_mask = pygame.mask.from_surface(car_surface)
     if not track_mask.overlap(car_mask, (car_rect.left - track_rect.left, car_rect.top - track_rect.top)):
         car_surface = pygame.transform.rotate(car_surface_orig, 180)
         car_rect = car_surface.get_rect(midtop = (600, 650))
         degrees = 180
-    #Casting ray
-    distance, (ray_end_x, ray_end_y) = cast_ray(track_mask, car_rect, track_rect, degrees)
-    pygame.draw.line(screen, "Blue", 
-                     (car_rect.centerx, car_rect.centery), 
-                     (ray_end_x + track_rect.left, ray_end_y + track_rect.top))
+
+    #Casting rays
+    count = 8
+    dists, rays = cast_all_rays(track_mask, car_rect, track_rect, degrees, count)
+    for i in range(0,count) : 
+        pygame.draw.line(screen, "Blue", 
+                        (car_rect.centerx, car_rect.centery), 
+                        (rays[i][0] + track_rect.left, rays[i][1] + track_rect.top))
+    distance = dists[0]
 
     #All screen blits on to display
-
     screen.blit(score_surface, (0,0))
     screen.blit(distance_surface, (700, 0))
     screen.blit(car_surface, car_rect)
