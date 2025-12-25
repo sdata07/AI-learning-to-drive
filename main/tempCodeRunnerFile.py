@@ -16,19 +16,21 @@ running = True
 score_font = pygame.font.Font(None, 50)
 
 #Track info
-track_surface = pygame.image.load("pics/racetrack.jpg").convert_alpha()
-track_surface = pygame.transform.scale(track_surface, (width, 50))
-track_rect = track_surface.get_rect()
+track_surface = pygame.image.load("pics/racetrack.png").convert_alpha()
+track_surface = pygame.transform.scale_by(track_surface, 2)
+track_rect = track_surface.get_rect(center = (width/2, height/2))
+track_mask = pygame.mask.from_surface(track_surface)
+mask_image = track_mask.to_surface()
 
 #Car info
 car_surface  = pygame.image.load("pics/Car_top.png").convert_alpha()
-car_surface = pygame.transform.scale_by(car_surface, 0.03)
-car_rect = car_surface.get_rect(midtop = (0, 100))
+car_surface = pygame.transform.scale_by(car_surface, 0.04)
+car_rect = car_surface.get_rect(midtop = (600, 650))
 
 
 #Car info original
 car_surface_orig = car_surface
-degrees = 0
+degrees = 180
 speed = 0
 MAX_SPPED = 8
 
@@ -49,26 +51,36 @@ while running :
     car_rect.bottom %= height
     
     #Drawing the track
-    outer_track = pygame.Rect(width/2,height/2, width - 300, height - 200)
-    outer_track.center = (width/2, height/2)
-    pygame.draw.rect(screen, "Red", outer_track, 10, 105)
+    # outer_track = pygame.Rect(width/2,height/2, width - 300, height - 200)
+    # outer_track.center = (width/2, height/2)
+    # pygame.draw.rect(screen, "Red", outer_track, 10, 105)
 
-    race_track = pygame.Rect(width/2,height/2, width - 320, height - 220)
-    race_track.center = (width/2, height/2)
-    pygame.draw.rect(screen, "Gray", race_track, 0, 100)
+    # race_track = pygame.Rect(width/2,height/2, width - 320, height - 220)
+    # race_track.center = (width/2, height/2)
+    # pygame.draw.rect(screen, "Gray", race_track, 0, 95)
 
-    inner_track = pygame.Rect(width/2,height/2, width - 600, height - 400)
-    inner_track.center = (width/2, height/2)
-    pygame.draw.rect(screen, "Red", inner_track, 10, 90)
+    # inner_track = pygame.Rect(width/2,height/2, width - 600, height - 400)
+    # inner_track.center = (width/2, height/2)
+    # pygame.draw.rect(screen, "Red", inner_track, 10, 90)
 
-    
+    # middle_empty = pygame.Rect(width/2,height/2, width - 620, height - 420)
+    # middle_empty.center = (width/2, height/2)
+    # pygame.draw.rect(screen, "Black", middle_empty, 0, 80)
+    screen.blit(track_surface, track_rect)
+
+
+    #Collison check
+    car_mask = pygame.mask.from_surface(car_surface)
+    if not track_mask.overlap(car_mask, (car_rect.left - track_rect.left, car_rect.top - track_rect.top)):
+        clock.tick(500)
+        car_rect.midtop = (600, 650)
+        
 
     #All screen blits on to display
+
     screen.blit(score_surface, (0,0))
-    #All boundary rendering
-    border_rect = pygame.draw.rect(screen, "Blue", (700, 100, 5, track_rect.height))
-    collision_rect = pygame.draw.rect(screen, "Black", (0,100, width, 2))
     screen.blit(car_surface, car_rect)
+    
 
     #Handle player input
     keys = pygame.key.get_pressed()
