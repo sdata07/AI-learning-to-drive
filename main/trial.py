@@ -41,6 +41,15 @@ def dist_to_reward_gate(gates: list[reward_gate], car_rect: pygame.Rect) :
             avg = (np.add(gate.start, gate.end)) / 2
             return (car_rect.centerx - avg[0]) ** 2 + (car_rect.centery - avg[1]) **2
 
+def reset_gates(gates : list[reward_gate]):
+    for gate in gates:
+        gate.crossed = False
+
+def all_crossed(gates : list[reward_gate]) -> bool:
+    for gate in gates:
+        if not (gate.crossed):
+            return False
+    return True
 
 
 pygame.init()
@@ -80,7 +89,8 @@ gate_right = reward_gate((1037,400), (1192, 400))
 gate_up = reward_gate((width/2, 100), (width/2, 205))
 gate_down = reward_gate((width/2, 625), (width/2, 730))
 
-reward_gates = [gate_left, gate_right, gate_up, gate_down]
+reward_gates = [gate_left, gate_up, gate_right, gate_down]
+curr_gate = 0
 
 #Distances
 dists_to_edge = [-1] * RAY_COUNT
@@ -96,6 +106,7 @@ while running :
     score_surface = score_font.render(f"{degrees}", True, "Pink")
     distance_surface = score_font.render(f"{sum(dists_to_edge)/len(dists_to_edge)}", True, "Pink")
     reward_dist_surface = score_font.render(f"{dist_to_gate}", True, "Pink")
+    curr_gate_surface = score_font.render(f"{curr_gate}", True, "Pink")
 
     #All filling
     screen.fill((0,0,0))
@@ -114,6 +125,8 @@ while running :
         car_rect = car_surface.get_rect(midtop = (600, 650))
         degrees = 180
         speed = 0
+        reset_gates(reward_gates)
+        curr_gate = 0
 
     #Casting rays
     dists_to_edge, rays = cast_all_rays(track_mask, car_rect, track_rect, degrees, RAY_COUNT)
@@ -123,17 +136,22 @@ while running :
                         (rays[i][0] + track_rect.left, rays[i][1] + track_rect.top))
 
     #Drawing reward gates and calculating distance
+    if (all_crossed(reward_gates)):
+        reset_gates(reward_gates)
+        curr_gate = 0
     for gate in reward_gates:
         pygame.draw.line(screen, "Yellow", gate.start, gate.end)
-        if car_rect.clipline(gate.start, gate.end):
+        if car_rect.clipline(gate.start, gate.end) and reward_gates[curr_gate] == gate:
             gate.crossed = True
-            print(gate.crossed)
+            curr_gate +=1
+    
     dist_to_gate = dist_to_reward_gate(reward_gates, car_rect)
 
     #All screen blits on to display
     screen.blit(score_surface, (0,0))
     screen.blit(distance_surface, (700, 0))
     screen.blit(reward_dist_surface, (300,0))
+    screen.blit(curr_gate_surface, (500,0))
     screen.blit(car_surface, car_rect)
     
 

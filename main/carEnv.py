@@ -2,6 +2,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 import pygame
+import math
 
 
 class reward_gate:
@@ -29,13 +30,29 @@ def cast_ray(track_mask: pygame.mask, car_rect: pygame.Rect, track_rect: pygame.
 def cast_all_rays(track_mask: pygame.mask, car_rect: pygame.Rect, track_rect: pygame.Rect, degrees, count=4) : 
     step = 0
     ray_points = []
-    dists = []
+    dists_to_edge = []
     while (step <= 360) :
         dist, (ray_x, ray_y) = cast_ray(track_mask, car_rect, track_rect, degrees + step)
         ray_points.append((ray_x, ray_y))
-        dists.append(dist)
+        dists_to_edge.append(dist)
         step += 360/count
-    return dists, ray_points
+    return dists_to_edge, ray_points
+
+def dist_to_reward_gate(gates: list[reward_gate], car_rect: pygame.Rect) :
+    for gate in gates:
+        if (not gate.crossed):
+            avg = (np.add(gate.start, gate.end)) / 2
+            return (car_rect.centerx - avg[0]) ** 2 + (car_rect.centery - avg[1]) **2
+
+def reset_gates(gates : list[reward_gate]):
+    for gate in gates:
+        gate.crossed = False
+
+def all_crossed(gates : list[reward_gate]) -> bool:
+    for gate in gates:
+        if not (gate.crossed):
+            return False
+    return True
 
 
 class CarEnv(gym.Env):
@@ -95,9 +112,11 @@ class CarEnv(gym.Env):
         self.gate_up = reward_gate((self.width/2, 100), (self.width/2, 205))
         self.gate_down = reward_gate((self.width/2, 625), (self.width/2, 730))
 
-        self.reward_gates = [self.gate_left, self.gate_right, self.gate_up, self.gate_down]
+        self.reward_gates = [self.gate_left, self.gate_up, self.gate_right, self.gate_down]
+        self.curr_gate = 0
 
-        dists = [-1] * self.RAY_COUNT
+        #Distances
+        self.dists_to_edge = [-1] * self.RAY_COUNT
+        self.dist_to_gate = -1
 
-        #
         return self.observation
