@@ -71,8 +71,10 @@ RAY_COUNT = 8
 #Making Reward Gates (side_length = 155)
 gate_left = reward_gate((205,400), (360, 400))
 gate_right = reward_gate((1037,400), (1192, 400))
+gate_up = reward_gate((width/2, 100), (width/2, 205))
+gate_down = reward_gate((width/2, 625), (width/2, 730))
 
-reward_gates = [gate_left, gate_right]
+reward_gates = [gate_left, gate_right, gate_up, gate_down]
 
 distance = -1
 while running :
