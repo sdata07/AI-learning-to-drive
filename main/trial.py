@@ -27,14 +27,19 @@ def cast_ray(track_mask: pygame.mask, car_rect: pygame.Rect, track_rect: pygame.
 def cast_all_rays(track_mask: pygame.mask, car_rect: pygame.Rect, track_rect: pygame.Rect, degrees, count=4) : 
     step = 0
     ray_points = []
-    dists = []
+    dists_to_edge = []
     while (step <= 360) :
         dist, (ray_x, ray_y) = cast_ray(track_mask, car_rect, track_rect, degrees + step)
         ray_points.append((ray_x, ray_y))
-        dists.append(dist)
+        dists_to_edge.append(dist)
         step += 360/count
-    return dists, ray_points
+    return dists_to_edge, ray_points
 
+def dist_to_reward_gate(gates: list[reward_gate], car_rect: pygame.Rect) :
+    for gate in gates:
+        if (not gate.crossed):
+            avg = (np.add(gate.start, gate.end)) / 2
+            return (car_rect.centerx - avg[0]) ** 2 + (car_rect.centery - avg[1]) **2
 
 
 
@@ -68,6 +73,7 @@ speed = 0
 MAX_SPPED = 8
 RAY_COUNT = 8
 
+
 #Making Reward Gates (side_length = 155)
 gate_left = reward_gate((205,400), (360, 400))
 gate_right = reward_gate((1037,400), (1192, 400))
@@ -76,7 +82,10 @@ gate_down = reward_gate((width/2, 625), (width/2, 730))
 
 reward_gates = [gate_left, gate_right, gate_up, gate_down]
 
-distance = -1
+#Distances
+dists_to_edge = [-1] * RAY_COUNT
+dist_to_gate = -1
+
 while running :
     #Event loop
     for event in pygame.event.get() :
@@ -85,7 +94,8 @@ while running :
 
     #All rendering
     score_surface = score_font.render(f"{degrees}", True, "Pink")
-    distance_surface = score_font.render((f"{distance}"), True, "Pink")
+    distance_surface = score_font.render(f"{sum(dists_to_edge)/len(dists_to_edge)}", True, "Pink")
+    reward_dist_surface = score_font.render(f"{dist_to_gate}", True, "Pink")
 
     #All filling
     screen.fill((0,0,0))
@@ -106,23 +116,24 @@ while running :
         speed = 0
 
     #Casting rays
-    dists, rays = cast_all_rays(track_mask, car_rect, track_rect, degrees, RAY_COUNT)
-    for i in range(0,RAY_COUNT) : 
+    dists_to_edge, rays = cast_all_rays(track_mask, car_rect, track_rect, degrees, RAY_COUNT)
+    for i in range(0,RAY_COUNT): 
         pygame.draw.line(screen, "Blue", 
                         (car_rect.centerx, car_rect.centery), 
                         (rays[i][0] + track_rect.left, rays[i][1] + track_rect.top))
-    distance = dists[0]
 
-    #Drawing reward gates
+    #Drawing reward gates and calculating distance
     for gate in reward_gates:
         pygame.draw.line(screen, "Yellow", gate.start, gate.end)
         if car_rect.clipline(gate.start, gate.end):
             gate.crossed = True
             print(gate.crossed)
+    dist_to_gate = dist_to_reward_gate(reward_gates, car_rect)
 
     #All screen blits on to display
     screen.blit(score_surface, (0,0))
     screen.blit(distance_surface, (700, 0))
+    screen.blit(reward_dist_surface, (300,0))
     screen.blit(car_surface, car_rect)
     
 
