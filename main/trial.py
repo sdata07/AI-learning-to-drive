@@ -28,7 +28,7 @@ def cast_all_rays(track_mask: pygame.mask, car_rect: pygame.Rect, track_rect: py
     step = 0
     ray_points = []
     dists_to_edge = []
-    while (step <= 360) :
+    while (step < 360) :
         dist, (ray_x, ray_y) = cast_ray(track_mask, car_rect, track_rect, degrees + step)
         ray_points.append((ray_x, ray_y))
         dists_to_edge.append(dist)
@@ -40,6 +40,7 @@ def dist_to_reward_gate(gates: list[reward_gate], car_rect: pygame.Rect) :
         if (not gate.crossed):
             avg = (np.add(gate.start, gate.end)) / 2
             return (car_rect.centerx - avg[0]) ** 2 + (car_rect.centery - avg[1]) **2
+    return np.inf
 
 def reset_gates(gates : list[reward_gate]):
     for gate in gates:
@@ -50,6 +51,16 @@ def all_crossed(gates : list[reward_gate]) -> bool:
         if not (gate.crossed):
             return False
     return True
+
+def reset_car():
+    car_surface = pygame.transform.rotate(car_surface_orig, 180)
+    car_rect = car_surface.get_rect(midtop = (600, 650))
+    degrees = 180
+    speed = 0
+    reset_gates(reward_gates)
+    curr_gate = 0
+
+    return car_surface, car_rect, degrees, speed, curr_gate
 
 
 pygame.init()
@@ -68,7 +79,6 @@ track_surface = pygame.image.load("pics/racetrack.png").convert_alpha()
 track_surface = pygame.transform.scale_by(track_surface, 2)
 track_rect = track_surface.get_rect(center = (width/2, height/2))
 track_mask = pygame.mask.from_surface(track_surface)
-mask_image = track_mask.to_surface()
 
 #Car info
 car_surface  = pygame.image.load("pics/Car_top.png").convert_alpha()
@@ -121,16 +131,15 @@ while running :
     #Collison check and restart
     car_mask = pygame.mask.from_surface(car_surface)
     if not track_mask.overlap(car_mask, (car_rect.left - track_rect.left, car_rect.top - track_rect.top)):
-        car_surface = pygame.transform.rotate(car_surface_orig, 180)
-        car_rect = car_surface.get_rect(midtop = (600, 650))
-        degrees = 180
-        speed = 0
-        reset_gates(reward_gates)
-        curr_gate = 0
+        car_surface, car_rect, degrees, speed, curr_gate = reset_car()
 
     #Casting rays
     dists_to_edge, rays = cast_all_rays(track_mask, car_rect, track_rect, degrees, RAY_COUNT)
-    for i in range(0,RAY_COUNT): 
+
+    if (dists_to_edge[0] == 0 ) and len(set(dists_to_edge)) == 1: 
+        car_surface, car_rect, degrees, speed, curr_gate = reset_car()
+        
+    for i in range(0, RAY_COUNT): 
         pygame.draw.line(screen, "Blue", 
                         (car_rect.centerx, car_rect.centery), 
                         (rays[i][0] + track_rect.left, rays[i][1] + track_rect.top))
