@@ -4,11 +4,19 @@ import numpy as np
 import pygame
 import os
 import carEnv 
+import shutil
 
 from stable_baselines3 import PPO
 
 model_dir = "model"
 log_dir = "logs"
+
+
+
+if os.path.exists(model_dir):
+     shutil.rmtree(model_dir)
+if os.path.exists(log_dir):
+    shutil.rmtree(log_dir)
 
 os.makedirs(model_dir, exist_ok=True)
 os.makedirs(log_dir, exist_ok=True)

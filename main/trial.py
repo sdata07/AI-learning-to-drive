@@ -94,12 +94,13 @@ RAY_COUNT = 8
 
 
 #Making Reward Gates (side_length = 155)
-gate_left = reward_gate((205,400), (360, 400))
-gate_right = reward_gate((1037,400), (1192, 400))
-gate_up = reward_gate((width/2, 100), (width/2, 205))
-gate_down = reward_gate((width/2, 625), (width/2, 730))
+gate_1 = reward_gate((218, 643), (381, 573))
+gate_2 = reward_gate((205,400), (360, 400))
+gate_3 = reward_gate((width/2, 100), (width/2, 205))
+gate_4 = reward_gate((1037,400), (1192, 400))
+gate_5 = reward_gate((width/2, 625), (width/2, 730))
 
-reward_gates = [gate_left, gate_up, gate_right, gate_down]
+reward_gates = [gate_1, gate_2, gate_3, gate_4, gate_5]
 curr_gate = 0
 
 #Distances
@@ -113,8 +114,10 @@ while running :
             running = False
 
     #All rendering
-    score_surface = score_font.render(f"{degrees}", True, "Pink")
-    distance_surface = score_font.render(f"{sum(dists_to_edge)/len(dists_to_edge)}", True, "Pink")
+    score_surface = score_font.render(f"{pygame.mouse.get_pos()}", True, "Pink")
+    left_rays  = dists_to_edge[1:4]
+    right_rays = dists_to_edge[5:10]
+    distance_surface = score_font.render(f"{sum(left_rays)} and {sum(right_rays)}", True, "Pink")
     reward_dist_surface = score_font.render(f"{dist_to_gate}", True, "Pink")
     curr_gate_surface = score_font.render(f"{curr_gate}", True, "Pink")
 

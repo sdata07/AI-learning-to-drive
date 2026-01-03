@@ -125,6 +125,22 @@ class CarEnv(gym.Env):
             terminated = True
             reward = -10
 
+        min_dist = min(self.dists_to_edge)
+        if min_dist < 40 :
+            reward -=  (40 - min_dist) * 0.01
+
+        left_rays  = self.dists_to_edge[1:4]
+        right_rays = self.dists_to_edge[5:7]
+
+        left_space  = sum(left_rays)
+        right_space = sum(right_rays)
+
+        if action == 3 and left_space > right_space and self.speed != 0:   # turning left
+            reward += 0.001
+        elif action == 4 and right_space > left_space and self.speed != 0: # turning right
+            reward += 0.01
+
+
         #Drawing reward gates and calculating distance
         if (all_crossed(self.reward_gates)):
             reset_gates(self.reward_gates)
@@ -133,12 +149,12 @@ class CarEnv(gym.Env):
             if self.car_rect.clipline(gate.start, gate.end) and self.reward_gates[self.curr_gate] == gate:
                 gate.crossed = True
                 self.curr_gate +=1
-                reward += 10.0
+                reward += 30.0
         
         self.dist_to_gate = dist_to_reward_gate(self.reward_gates, self.car_rect)
 
         # progress reward
-        reward -= math.sqrt(self.dist_to_gate) * 0.01
+        reward -= math.sqrt(self.dist_to_gate) * 0.02
 
         #Handle player input
 
