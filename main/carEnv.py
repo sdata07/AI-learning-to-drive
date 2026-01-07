@@ -42,8 +42,11 @@ def dist_to_reward_gate(gates: list[reward_gate], car_rect: pygame.Rect) :
     for gate in gates:
         if (not gate.crossed):
             avg = (np.add(gate.start, gate.end)) / 2
-            return (car_rect.centerx - avg[0]) ** 2 + (car_rect.centery - avg[1]) **2
-    return np.inf
+            x_diff = car_rect.centerx - avg[0]
+            y_diff = car_rect.centery - avg[1]
+            angle = math.atan2(y_diff, x_diff)
+            return ((x_diff) ** 2 + (y_diff) ** 2), angle
+    return np.inf, 0
 
 def reset_gates(gates : list[reward_gate]):
     for gate in gates:
@@ -90,12 +93,17 @@ class CarEnv(gym.Env):
         self.car_surface_orig_rotated = pygame.transform.rotate(self.car_surface_orig, 180)
 
         #Reward gates
-        self.gate_left = reward_gate((205,400), (360, 400))
-        self.gate_right = reward_gate((1037,400), (1192, 400))
-        self.gate_up = reward_gate((self.width/2, 100), (self.width/2, 205))
-        self.gate_down = reward_gate((self.width/2, 625), (self.width/2, 730))
+        self.gate_1 = reward_gate((218, 643), (381, 573))
+        self.gate_2 = reward_gate((205,400), (360, 400))
+        self.gate_3 = reward_gate((self.width/2, 100), (self.width/2, 205))
+        self.gate_4 = reward_gate((1037,400), (1192, 400))
+        self.gate_5 = reward_gate((self.width/2, 625), (self.width/2, 730))
 
-        self.reward_gates = [self.gate_left, self.gate_up, self.gate_right, self.gate_down]
+        self.reward_gates = [self.gate_1, self.gate_2, self.gate_3, self.gate_4, self.gate_5]
+
+        self.car_rect = self.car_surface.get_rect(midtop = (600, 650))
+        self.dist_to_gate, self.angle_gate = dist_to_reward_gate(self.reward_gates, self.car_rect)
+        self.prev_dist_to_gate = self.dist_to_gate
 
         # They must be gym.spaces objects
         # Example when using discrete actions:
@@ -106,7 +114,7 @@ class CarEnv(gym.Env):
 
     def step(self, action):
         terminated = False
-        reward = 0
+        reward =-0.1
         #Conditionals
         self.car_rect.left %= self.width
         self.car_rect.bottom %= self.height
@@ -115,19 +123,18 @@ class CarEnv(gym.Env):
         car_mask = pygame.mask.from_surface(self.car_surface)
         if not self.track_mask.overlap(car_mask, (self.car_rect.left - self.track_rect.left, self.car_rect.top - self.track_rect.top)):
             terminated = True
-            reward -= 10
-
+            reward -= 200
 
         #Casting rays
         self.dists_to_edge, self.rays = cast_all_rays(self.track_mask, self.car_rect, self.track_rect, self.degrees, self.RAY_COUNT)
 
         if (self.dists_to_edge[0] == 0 ) and len(set(self.dists_to_edge)) == 1: 
             terminated = True
-            reward = -10
+            reward -= 200
 
         min_dist = min(self.dists_to_edge)
         if min_dist < 40 :
-            reward -=  (40 - min_dist) * 0.01
+            reward -=  (40 - min_dist) * 1
 
         left_rays  = self.dists_to_edge[1:4]
         right_rays = self.dists_to_edge[5:7]
@@ -135,12 +142,13 @@ class CarEnv(gym.Env):
         left_space  = sum(left_rays)
         right_space = sum(right_rays)
 
-        if action == 3 and left_space > right_space and self.speed != 0:   # turning left
-            reward += 0.001
-        elif action == 4 and right_space > left_space and self.speed != 0: # turning right
-            reward += 0.01
+        if action == 3 and left_space > 5 * right_space and self.speed != 0:   # turning left
+            reward += 2
+        elif action == 4 and right_space > 5 * left_space and self.speed != 0: # turning right
+            reward += 2
 
-
+        
+        
         #Drawing reward gates and calculating distance
         if (all_crossed(self.reward_gates)):
             reset_gates(self.reward_gates)
@@ -149,14 +157,19 @@ class CarEnv(gym.Env):
             if self.car_rect.clipline(gate.start, gate.end) and self.reward_gates[self.curr_gate] == gate:
                 gate.crossed = True
                 self.curr_gate +=1
-                reward += 30.0
+                reward += 90.0
         
-        self.dist_to_gate = dist_to_reward_gate(self.reward_gates, self.car_rect)
+        self.prev_dist_to_gate = self.dist_to_gate
+        self.dist_to_gate, angle_to_gate = dist_to_reward_gate(self.reward_gates, self.car_rect)
+        progress = self.prev_dist_to_gate - self.dist_to_gate
+        relative_angle = (angle_to_gate - self.degrees + 180) % 360 - 180
 
         # progress reward
-        reward -= math.sqrt(self.dist_to_gate) * 0.02
-
+        #reward -= math.sqrt(self.dist_to_gate) * 0.01
+        reward += np.sign(progress) * math.sqrt(abs(progress)) * 0.01
         #Handle player input
+        if action in (3, 4) and abs(progress) == 0:
+            reward -= 0.5
 
         if action == 1 :
             self.speed += 1
@@ -167,7 +180,7 @@ class CarEnv(gym.Env):
         else :
             factor = -1 if self.speed < 0 else 1
             s = abs(self.speed)
-            s -= 0.4 * (s / 10)
+            s -= 0.8 * (s / 10)
             self.speed = s * factor
 
         if action == 3 or action == 4:
@@ -206,8 +219,9 @@ class CarEnv(gym.Env):
         reset_gates(self.reward_gates)
 
         #Distances
-        self.dists_to_edge = [-1] * self.RAY_COUNT
-        self.dist_to_gate = -1
+        self.dist_to_gate, angle = dist_to_reward_gate(self.reward_gates, self.car_rect)
+        self.prev_dist_to_gate = self.dist_to_gate
+        self.dists_to_edge, self.rays = cast_all_rays(self.track_mask, self.car_rect, self.track_rect, self.degrees, self.RAY_COUNT)
 
         self.car_surface = self.car_surface_orig_rotated
 

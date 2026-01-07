@@ -39,8 +39,11 @@ def dist_to_reward_gate(gates: list[reward_gate], car_rect: pygame.Rect) :
     for gate in gates:
         if (not gate.crossed):
             avg = (np.add(gate.start, gate.end)) / 2
-            return (car_rect.centerx - avg[0]) ** 2 + (car_rect.centery - avg[1]) **2
-    return np.inf
+            x_diff = avg[0] - car_rect.centerx
+            y_diff = avg[1] - car_rect.centery
+            angle = math.atan2(y_diff, x_diff)
+            return ((x_diff) ** 2 + (y_diff) ** 2), angle
+    return np.inf, 0
 
 def reset_gates(gates : list[reward_gate]):
     for gate in gates:
@@ -106,6 +109,7 @@ curr_gate = 0
 #Distances
 dists_to_edge = [-1] * RAY_COUNT
 dist_to_gate = -1
+angle_to_gate = -1
 
 while running :
     #Event loop
@@ -113,13 +117,12 @@ while running :
         if event.type == pygame.QUIT :
             running = False
 
-    #All rendering
-    score_surface = score_font.render(f"{pygame.mouse.get_pos()}", True, "Pink")
     left_rays  = dists_to_edge[1:4]
     right_rays = dists_to_edge[5:10]
+    #All rendering
+    score_surface = score_font.render(f"{pygame.mouse.get_pos()}", True, "Pink")
     distance_surface = score_font.render(f"{sum(left_rays)} and {sum(right_rays)}", True, "Pink")
-    reward_dist_surface = score_font.render(f"{dist_to_gate}", True, "Pink")
-    curr_gate_surface = score_font.render(f"{curr_gate}", True, "Pink")
+    reward_dist_surface = score_font.render(f"{dist_to_gate} and {angle_to_gate * 180/math.pi}", True, "Pink")
 
     #All filling
     screen.fill((0,0,0))
@@ -157,13 +160,11 @@ while running :
             gate.crossed = True
             curr_gate +=1
     
-    dist_to_gate = dist_to_reward_gate(reward_gates, car_rect)
+    dist_to_gate, angle_to_gate = dist_to_reward_gate(reward_gates, car_rect)
 
     #All screen blits on to display
     screen.blit(score_surface, (0,0))
-    screen.blit(distance_surface, (700, 0))
     screen.blit(reward_dist_surface, (300,0))
-    screen.blit(curr_gate_surface, (500,0))
     screen.blit(car_surface, car_rect)
     
 
@@ -179,7 +180,7 @@ while running :
     else :
         factor = -1 if speed < 0 else 1
         speed = abs(speed)
-        speed -= 0.4 * (speed / 10)
+        speed -= 0.8 * (speed / 10)
         speed = speed * factor
 
     if keys[pygame.K_RIGHT] or keys[pygame.K_LEFT]:

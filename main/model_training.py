@@ -11,7 +11,10 @@ from stable_baselines3 import PPO
 model_dir = "model"
 log_dir = "logs"
 
-
+confirm = input("Run the trained model? (yes/n): ").strip().lower()
+if confirm != "yes":
+    print("Exiting.")
+    exit()
 
 if os.path.exists(model_dir):
      shutil.rmtree(model_dir)
