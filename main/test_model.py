@@ -9,7 +9,7 @@ pygame.init()
 
 env = carEnv.CarEnv()
 # Load model
-model = PPO.load('model/a2c_1091000.zip', env=env)
+model = PPO.load('main/saved_models/best_ppo.zip', env=env)
 
 # Run a test
 obs = env.reset()[0]

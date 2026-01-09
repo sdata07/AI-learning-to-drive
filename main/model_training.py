@@ -26,7 +26,9 @@ os.makedirs(log_dir, exist_ok=True)
 
 env = carEnv.CarEnv()
 
-model = PPO('MlpPolicy', env, verbose=1, tensorboard_log=log_dir)
+model = PPO.load("main/saved_models/best_ppo.zip", env=env)
+
+#PPO("main/saved_models/a2c_1091000", env, verbose=1, tensorboard_log=log_dir)
 
 # This loop will keep training until you stop it with Ctr-C.
 # Start another cmd prompt and launch Tensorboard: tensorboard --logdir logs
@@ -38,5 +40,4 @@ while True:
     iters += 1
 
     model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False) # train
-    model.save(f"{model_dir}/a2c_{TIMESTEPS*iters}") # Save a trained model every TIMESTEPS
-    env.render()
+    model.save(f"{model_dir}/ppo_{TIMESTEPS*iters}") # Save a trained model every TIMESTEPS

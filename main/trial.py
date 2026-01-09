@@ -99,11 +99,19 @@ RAY_COUNT = 8
 #Making Reward Gates (side_length = 155)
 gate_1 = reward_gate((218, 643), (381, 573))
 gate_2 = reward_gate((205,400), (360, 400))
-gate_3 = reward_gate((width/2, 100), (width/2, 205))
-gate_4 = reward_gate((1037,400), (1192, 400))
-gate_5 = reward_gate((width/2, 625), (width/2, 730))
+gate_3 = reward_gate((388,236), (241,139))
+gate_4 = reward_gate((479,100), (479,203))
+gate_5 = reward_gate((width/2, 100), (width/2, 203))
+gate_6 = reward_gate((937, 100),(937,203))
+gate_7 = reward_gate((1000,231), (1140,126))
+gate_8 = reward_gate((1037,303), (1192, 303))
+gate_9 = reward_gate((1037,400), (1192, 400))
+gate_10 = reward_gate((1037,493), (1192, 493))
+gate_11 = reward_gate((1021,574), (1163,683))
+gate_12 = reward_gate((880, 625), (880, 730))
+gate_13 = reward_gate((width/2, 625), (width/2, 730))
 
-reward_gates = [gate_1, gate_2, gate_3, gate_4, gate_5]
+reward_gates = [gate_1, gate_2, gate_3, gate_4, gate_5, gate_6, gate_7, gate_8, gate_9, gate_10, gate_11, gate_12, gate_13]
 curr_gate = 0
 
 #Distances
@@ -123,6 +131,8 @@ while running :
     score_surface = score_font.render(f"{pygame.mouse.get_pos()}", True, "Pink")
     distance_surface = score_font.render(f"{sum(left_rays)} and {sum(right_rays)}", True, "Pink")
     reward_dist_surface = score_font.render(f"{dist_to_gate} and {angle_to_gate * 180/math.pi}", True, "Pink")
+    curr_surface = score_font.render(f"{curr_gate}", True, "Pink")
+
 
     #All filling
     screen.fill((0,0,0))
@@ -165,6 +175,7 @@ while running :
     #All screen blits on to display
     screen.blit(score_surface, (0,0))
     screen.blit(reward_dist_surface, (300,0))
+    screen.blit(curr_surface, (1200, 0))
     screen.blit(car_surface, car_rect)
     
 

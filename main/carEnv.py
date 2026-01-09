@@ -93,13 +93,22 @@ class CarEnv(gym.Env):
         self.car_surface_orig_rotated = pygame.transform.rotate(self.car_surface_orig, 180)
 
         #Reward gates
+
         self.gate_1 = reward_gate((218, 643), (381, 573))
         self.gate_2 = reward_gate((205,400), (360, 400))
-        self.gate_3 = reward_gate((self.width/2, 100), (self.width/2, 205))
-        self.gate_4 = reward_gate((1037,400), (1192, 400))
-        self.gate_5 = reward_gate((self.width/2, 625), (self.width/2, 730))
+        self.gate_3 = reward_gate((388,236), (241,139))
+        self.gate_4 = reward_gate((479,100), (479,203))
+        self.gate_5 = reward_gate((self.width/2, 100), (self.width/2, 203))
+        self.gate_6 = reward_gate((937, 100),(937,203))
+        self.gate_7 = reward_gate((1000,231), (1140,126))
+        self.gate_8 = reward_gate((1037,303), (1192, 303))
+        self.gate_9 = reward_gate((1037,400), (1192, 400))
+        self.gate_10 = reward_gate((1037,493), (1192, 493))
+        self.gate_11 = reward_gate((1021,574), (1163,683))
+        self.gate_12 = reward_gate((880, 625), (880, 730))
+        self.gate_13 = reward_gate((self.width/2, 625), (self.width/2, 730))
 
-        self.reward_gates = [self.gate_1, self.gate_2, self.gate_3, self.gate_4, self.gate_5]
+        self.reward_gates = [self.gate_1, self.gate_2, self.gate_3, self.gate_4, self.gate_5, self.gate_6, self.gate_7, self.gate_8, self.gate_9, self.gate_10, self.gate_11, self.gate_12, self.gate_13]
 
         self.car_rect = self.car_surface.get_rect(midtop = (600, 650))
         self.dist_to_gate, self.angle_gate = dist_to_reward_gate(self.reward_gates, self.car_rect)
